@@ -1,0 +1,11 @@
+1. Why do we store the token in localStorage? What is one security risk, and what is a more secure alternative?
+localStorage is simple, synchronous, and persists across page reloads, which makes it a convenient choice for a beginner-friendly JWT setup. The main risk is XSS: any injected script can read localStorage and exfiltrate the token. A more secure alternative is to store the JWT in an HttpOnly, Secure, SameSite cookie that JavaScript cannot read, combined with CSRF protection on the server.
+
+2. What is the purpose of the AuthContext? Why not just pass the token as a prop to each component?
+AuthContext centralizes authentication state (user, token, login, logout) so any component can consume it via useAuth() without prop drilling through every layer of the tree. Prop-drilling the token would couple unrelated components to auth and become unmanageable as the app grows. The context also gives us one place to handle persistence and logout consistently.
+
+3. What happens on the frontend when the JWT expires? Describe the user experience you would want to implement.
+When the token expires, protected requests return 401 Unauthorized. In Students.jsx I catch 401, call logout() to clear the stale session, and the user is redirected to /login. Ideally the login page would show a friendly message like "Your session expired, please log in again," and if a refresh token exists we could silently re-authenticate before redirecting — but a clean redirect with a notice is the minimum acceptable UX.
+
+4. What is the difference between the backend's requireAuth middleware and the frontend's ProtectedRoute? Why do we need both?
+requireAuth runs on the server and verifies the JWT signature before allowing access to protected API endpoints — it is the actual security boundary; without it, anyone could fetch data directly. ProtectedRoute is a UX guard: it prevents unauthenticated users from seeing pages they can't use and redirects them to login. The frontend check can be bypassed (users can call the API directly), so it is not security — it's convenience. Both are needed: one enforces access, the other shapes the experience.
